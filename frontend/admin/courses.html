@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการคอร์ส - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1 class="section-title">จัดการคอร์ส</h1>
+      <button id="new-course-btn" class="btn btn-primary">+ เพิ่มคอร์สใหม่</button>
+    </div>
+
+    <div id="course-form-panel" class="card" style="padding:20px; display:none; margin-bottom:20px;"></div>
+
+    <div id="course-alert"></div>
+    <div id="course-table"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+let categoriesCache = [];
+
+function formHtml(course) {
+  const c = course || {};
+  return `
+    <h3>${course ? "แก้ไขคอร์ส" : "เพิ่มคอร์สใหม่"}</h3>
+    <form id="course-form">
+      <label>ชื่อคอร์ส</label>
+      <input type="text" name="title" required value="${c.title ? escapeHtml(c.title) : ""}">
+
+      <label>หมวดหมู่</label>
+      <select name="category_id">
+        <option value="">-- ไม่ระบุ --</option>
+        ${categoriesCache.map(cat => `<option value="${cat.id}" ${c.category_id === cat.id ? "selected" : ""}>${escapeHtml(cat.name)}</option>`).join("")}
+      </select>
+
+      <label>คำอธิบายสั้น</label>
+      <input type="text" name="short_desc" value="${c.short_desc ? escapeHtml(c.short_desc) : ""}">
+
+      <label>คำอธิบายแบบเต็ม</label>
+      <textarea name="long_desc">${c.long_desc ? escapeHtml(c.long_desc) : ""}</textarea>
+
+      <label>ตัวอย่างโค้ด (ไม่บังคับ)</label>
+      <textarea name="code_sample" style="font-family:monospace;">${c.code_sample ? escapeHtml(c.code_sample) : ""}</textarea>
+
+      <label>ราคา (บาท)</label>
+      <input type="number" name="price" min="0" step="0.01" required value="${c.price ?? 0}">
+
+      <label>URL รูปภาพ (ไม่บังคับ)</label>
+      <input type="text" name="image_url" value="${c.image_url ? escapeHtml(c.image_url) : ""}">
+
+      <div class="checkbox-row">
+        <input type="checkbox" name="is_published" id="is_published" ${c.is_published !== false ? "checked" : ""}>
+        <label for="is_published" style="margin:0;">เผยแพร่คอร์สนี้ (แสดงบนหน้าเว็บ)</label>
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px;">
+        <button type="submit" class="btn btn-primary">บันทึก</button>
+        <button type="button" id="cancel-form-btn" class="btn btn-secondary">ยกเลิก</button>
+      </div>
+    </form>
+  `;
+}
+
+function showForm(course) {
+  const panel = document.getElementById("course-form-panel");
+  panel.style.display = "block";
+  panel.innerHTML = formHtml(course);
+  document.getElementById("cancel-form-btn").addEventListener("click", () => { panel.style.display = "none"; });
+  document.getElementById("course-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const payload = {
+      title: fd.get("title"),
+      category_id: fd.get("category_id") ? parseInt(fd.get("category_id")) : null,
+      short_desc: fd.get("short_desc") || "",
+      long_desc: fd.get("long_desc") || "",
+      code_sample: fd.get("code_sample") || "",
+      price: parseFloat(fd.get("price")) || 0,
+      image_url: fd.get("image_url") || null,
+      is_published: fd.get("is_published") === "on"
+    };
+    const alertBox = document.getElementById("course-alert");
+    try {
+      if (course) {
+        await api.admin.updateCourse(course.id, payload);
+      } else {
+        await api.admin.createCourse(payload);
+      }
+      panel.style.display = "none";
+      loadCourses();
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+    }
+  });
+}
+
+async function loadCourses() {
+  const table = document.getElementById("course-table");
+  try {
+    const courses = await api.admin.courses();
+    table.innerHTML = `
+      <table>
+        <thead><tr><th>ชื่อคอร์ส</th><th>ราคา</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody>
+          ${courses.map(c => `
+            <tr>
+              <td>${escapeHtml(c.title)}</td>
+              <td>฿${formatMoney(c.price)}</td>
+              <td>${c.is_published ? '<span class="pill pill-active">เผยแพร่</span>' : '<span class="pill pill-banned">ซ่อนอยู่</span>'}</td>
+              <td style="display:flex; gap:6px;">
+                <button class="btn btn-sm btn-secondary" data-edit="${c.id}">แก้ไข</button>
+                <button class="btn btn-sm btn-danger" data-del="${c.id}">ลบ</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    document.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const course = courses.find(c => c.id == btn.dataset.edit);
+        showForm(course);
+      });
+    });
+    document.querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("ยืนยันการลบคอร์สนี้?")) return;
+        await api.admin.deleteCourse(btn.dataset.del);
+        loadCourses();
+      });
+    });
+  } catch (e) {
+    table.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("courses");
+  categoriesCache = await api.categories().catch(() => []);
+  document.getElementById("new-course-btn").addEventListener("click", () => showForm(null));
+  loadCourses();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการผู้ใช้งาน - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">จัดการผู้ใช้งาน</h1>
+    <div id="user-table"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+let currentUserCache = null;
+
+async function loadUsers() {
+  const table = document.getElementById("user-table");
+  const isCeo = currentUserCache.role === "ceo";
+  try {
+    const users = await api.admin.users();
+    table.innerHTML = `
+      <table>
+        <thead><tr><th>Username</th><th>อีเมล</th><th>สิทธิ์</th><th>สถานะ</th><th>สมัครเมื่อ</th><th style="min-width:220px;">จัดการ</th></tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td>${escapeHtml(u.username)}</td>
+              <td>${escapeHtml(u.email)}</td>
+              <td><span class="pill pill-${u.role}">${u.role === "ceo" ? "👑 CEO" : u.role}</span></td>
+              <td><span class="pill pill-${u.status}">${u.status === "active" ? "ปกติ" : "ถูกระงับ"}</span></td>
+              <td>${formatDate(u.created_at)}</td>
+              <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${rowActions(u, isCeo)}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      ${!isCeo ? `<p style="color:var(--muted); margin-top:10px;">* การเลื่อนขั้น/ถอดสิทธิ์ admin ทำได้เฉพาะบัญชี CEO เท่านั้น</p>` : ""}
+    `;
+    document.querySelectorAll("[data-toggle]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try { await api.admin.toggleBan(btn.dataset.toggle); loadUsers(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+    document.querySelectorAll("[data-role]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm(`ยืนยันเปลี่ยนสิทธิ์เป็น "${btn.dataset.role}"?`)) return;
+        try { await api.admin.setRole(btn.dataset.user, btn.dataset.role); loadUsers(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+  } catch (e) {
+    table.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function rowActions(u, isCeo) {
+  if (u.id === currentUserCache.id) return "-";
+  if (u.role === "ceo") return `<span style="color:var(--muted); font-size:0.85rem;">บัญชี CEO</span>`;
+
+  const banBtn = `<button class="btn btn-sm ${u.status === "active" ? "btn-danger" : "btn-secondary"}" data-toggle="${u.id}">${u.status === "active" ? "ระงับ" : "ปลดระงับ"}</button>`;
+
+  if (!isCeo) return banBtn;
+
+  const roleBtn = u.role === "admin"
+    ? `<button class="btn btn-sm btn-secondary" data-role="user" data-user="${u.id}">ถอดเป็น User</button>`
+    : `<button class="btn btn-sm btn-outline" data-role="admin" data-user="${u.id}">เลื่อนเป็น Admin</button>`;
+
+  return banBtn + roleBtn;
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  currentUserCache = user;
+  renderAdminSidebar("users");
+  loadUsers();
+}
+init();
+</script>
+</body>
+</html>

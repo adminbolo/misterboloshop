@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สมัครสมาชิก - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<div class="form-card">
+  <h2>สมัครสมาชิก</h2>
+  <div id="form-alert"></div>
+  <form id="register-form">
+    <label>ชื่อผู้ใช้ (username)</label>
+    <input type="text" name="username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+" title="ใช้ได้เฉพาะ a-z, 0-9, _">
+
+    <label>อีเมล</label>
+    <input type="email" name="email" required>
+
+    <label>รหัสผ่าน (อย่างน้อย 8 ตัว มีตัวอักษรและตัวเลข)</label>
+    <input type="password" name="password" required minlength="8">
+
+    <label>ชื่อ-นามสกุล (ไม่บังคับ)</label>
+    <input type="text" name="full_name">
+
+    <label>เบอร์โทร (ไม่บังคับ)</label>
+    <input type="text" name="phone">
+
+    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">สมัครสมาชิก</button>
+  </form>
+  <p style="text-align:center; margin-top:16px;">มีบัญชีอยู่แล้ว? <a href="/login.html" style="color:var(--primary); font-weight:600;">เข้าสู่ระบบ</a></p>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+document.getElementById("register-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById("form-alert");
+  alertBox.innerHTML = "";
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd.entries());
+  if (!payload.full_name) delete payload.full_name;
+  if (!payload.phone) delete payload.phone;
+
+  try {
+    await api.register(payload);
+    window.location.href = "/index.html";
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+  }
+});
+</script>
+</body>
+</html>

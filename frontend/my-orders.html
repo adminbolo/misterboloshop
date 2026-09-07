@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำสั่งซื้อของฉัน - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container" style="max-width:800px;">
+  <h1 class="section-title">ประวัติคำสั่งซื้อของฉัน</h1>
+  <div id="orders-content"><p>กำลังโหลด...</p></div>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+async function loadOrders() {
+  const user = await requireLogin();
+  if (!user) return;
+
+  const mount = document.getElementById("orders-content");
+  try {
+    const orders = await api.myOrders();
+    if (orders.length === 0) {
+      mount.innerHTML = `<div class="empty-state">ยังไม่มีประวัติการสั่งซื้อ</div>`;
+      return;
+    }
+    mount.innerHTML = `
+      <table>
+        <thead><tr><th>เลขที่คำสั่งซื้อ</th><th>วันที่</th><th>จำนวนรายการ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody>
+          ${orders.map(o => `
+            <tr>
+              <td>${escapeHtml(o.order_no)}</td>
+              <td>${formatDate(o.created_at)}</td>
+              <td>${o.items.length}</td>
+              <td>฿${formatMoney(o.total)}</td>
+              <td><span class="pill pill-active">ชำระแล้ว (จำลอง)</span></td>
+              <td><a href="/receipt.html?order_no=${encodeURIComponent(o.order_no)}" class="btn btn-sm btn-secondary">ดูใบเสร็จ</a></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    mount.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+loadOrders();
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดคอร์ส - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container" style="max-width:760px;">
+  <div id="course-content"><p>กำลังโหลด...</p></div>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+async function loadCourse() {
+  const slug = new URLSearchParams(window.location.search).get("slug");
+  const mount = document.getElementById("course-content");
+  if (!slug) { mount.innerHTML = "<p>ไม่พบคอร์สที่ระบุ</p>"; return; }
+
+  try {
+    const course = await api.course(slug);
+    const user = await api.me();
+
+    mount.innerHTML = `
+      ${courseImgHtml(course, "height:200px; border-radius:14px; font-size:3rem;")}
+      <h1>${escapeHtml(course.title)}</h1>
+      <p style="color:var(--muted)">${escapeHtml(course.short_desc || "")}</p>
+      <p>${escapeHtml(course.long_desc || "")}</p>
+      ${course.code_sample ? `<h3>ตัวอย่างโค้ดในคอร์สนี้</h3><pre class="code-block">${escapeHtml(course.code_sample)}</pre>` : ""}
+      <div class="card-price" style="font-size:1.6rem; margin:20px 0;">฿${formatMoney(course.price)}</div>
+      <button id="add-cart-btn" class="btn btn-primary">เพิ่มลงตะกร้า</button>
+      <div id="course-alert" style="margin-top:12px;"></div>
+    `;
+
+    document.getElementById("add-cart-btn").addEventListener("click", async () => {
+      if (!user) {
+        window.location.href = "/login.html?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+        return;
+      }
+      const alertBox = document.getElementById("course-alert");
+      try {
+        await api.addToCart(course.id, 1);
+        alertBox.innerHTML = `<div class="alert alert-success">เพิ่มลงตะกร้าแล้ว! <a href="/cart.html">ไปที่ตะกร้า</a></div>`;
+      } catch (err) {
+        alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      }
+    });
+  } catch (e) {
+    mount.innerHTML = `<div class="empty-state">ไม่พบคอร์สนี้ หรือถูกลบไปแล้ว</div>`;
+  }
+}
+
+loadCourse();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>มิสเตอร์โบโล่ | หน้าหลัก</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="hero">
+  <div class="container">
+    <h1>Misterbolo</h1>
+    <p>เรียนเขียนโปรแกรมและภาษาต่างๆ กับคอร์สคุณภาพ ออกแบบมาให้เข้าใจง่าย ลงมือทำได้จริง</p>
+    <a href="/courses.html" class="btn btn-primary">ดูคอร์สทั้งหมด</a>
+  </div>
+</section>
+
+<section class="container">
+  <div class="mock-tag">⚠️ เว็บไซต์นี้เป็นระบบสาธิต ระบบชำระเงินเป็นแบบจำลอง (Mock Payment) ยังไม่มีการตัดเงินจริง</div>
+</section>
+
+<section class="container">
+  <h2 class="section-title">คอร์สแนะนำ</h2>
+  <div id="course-grid" class="grid"><p>กำลังโหลด...</p></div>
+</section>
+
+<footer>
+  <div class="container">© <span id="year"></span> Mister Bolo — เว็บไซต์สาธิตเพื่อการศึกษา</div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/home.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

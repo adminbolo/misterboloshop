@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คอร์สเรียนทั้งหมด - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container">
+  <h1 class="section-title">คอร์สเรียนทั้งหมด</h1>
+  <div id="category-filter" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;"></div>
+  <div id="course-grid" class="grid"><p>กำลังโหลด...</p></div>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/courses.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

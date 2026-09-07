@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตะกร้าของฉัน - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container" style="max-width:700px;">
+  <h1 class="section-title">ตะกร้าของฉัน</h1>
+  <div id="cart-alert"></div>
+  <div id="cart-content"><p>กำลังโหลด...</p></div>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+async function loadCart() {
+  const user = await requireLogin();
+  if (!user) return;
+
+  const mount = document.getElementById("cart-content");
+  try {
+    const items = await api.cart();
+    if (items.length === 0) {
+      mount.innerHTML = `<div class="empty-state">ตะกร้าว่างเปล่า<br><a href="/courses.html" class="btn btn-primary" style="margin-top:14px;">ไปเลือกคอร์สเรียน</a></div>`;
+      return;
+    }
+    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const vat = subtotal * 0.07;
+    const total = subtotal + vat;
+
+    mount.innerHTML = `
+      <div class="card" style="padding:20px;">
+        ${items.map(rowHtml).join("")}
+      </div>
+      <div class="cart-summary">
+        <div>ยอดรวม: ฿${formatMoney(subtotal)}</div>
+        <div>ภาษีมูลค่าเพิ่ม (7%): ฿${formatMoney(vat)}</div>
+        <div class="total">ทั้งหมด: ฿${formatMoney(total)}</div>
+        <button id="checkout-btn" class="btn btn-primary" style="margin-top:14px;">ชำระเงิน (จำลอง)</button>
+      </div>
+    `;
+
+    document.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await api.removeCartItem(btn.dataset.remove);
+        loadCart();
+      });
+    });
+    document.querySelectorAll("[data-qty]").forEach(input => {
+      input.addEventListener("change", async () => {
+        const qty = Math.max(0, Math.min(20, parseInt(input.value, 10) || 0));
+        await api.updateCartItem(input.dataset.qty, qty);
+        loadCart();
+      });
+    });
+
+    document.getElementById("checkout-btn").addEventListener("click", async () => {
+      const alertBox = document.getElementById("cart-alert");
+      try {
+        const result = await api.checkout();
+        window.location.href = result.redirect;
+      } catch (err) {
+        alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      }
+    });
+  } catch (e) {
+    mount.innerHTML = `<p>โหลดตะกร้าไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function rowHtml(item) {
+  return `
+    <div class="cart-row">
+      <div class="cart-thumb">${escapeHtml(item.title.slice(0,1))}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;">${escapeHtml(item.title)}</div>
+        <div style="color:var(--muted); font-size:0.9rem;">฿${formatMoney(item.price)} / คอร์ส</div>
+      </div>
+      <input type="number" class="qty-input" data-qty="${item.cart_item_id}" value="${item.quantity}" min="0" max="20">
+      <button class="btn btn-sm btn-danger" data-remove="${item.cart_item_id}">ลบ</button>
+    </div>
+  `;
+}
+
+loadCart();
+</script>
+</body>
+</html>

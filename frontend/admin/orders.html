@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำสั่งซื้อทั้งหมด - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">คำสั่งซื้อทั้งหมด</h1>
+    <div id="order-table"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+async function loadOrders() {
+  const table = document.getElementById("order-table");
+  try {
+    const orders = await api.admin.orders();
+    table.innerHTML = orders.length ? `
+      <table>
+        <thead><tr><th>เลขที่คำสั่งซื้อ</th><th>วันที่</th><th>ยอดรวม</th><th>สถานะ</th><th>ช่องทางชำระ</th></tr></thead>
+        <tbody>
+          ${orders.map(o => `
+            <tr>
+              <td>${escapeHtml(o.order_no)}</td>
+              <td>${formatDate(o.created_at)}</td>
+              <td>฿${formatMoney(o.total)}</td>
+              <td><span class="pill pill-active">${escapeHtml(o.status)}</span></td>
+              <td>${escapeHtml(o.payment_mode)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : `<div class="empty-state">ยังไม่มีคำสั่งซื้อในระบบ</div>`;
+  } catch (e) {
+    table.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("orders");
+  loadOrders();
+}
+init();
+</script>
+</body>
+</html>

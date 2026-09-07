@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งปัญหา - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<div class="form-card">
+  <h2>แจ้งปัญหา / ข้อเสนอแนะ</h2>
+  <p style="color:var(--muted); font-size:0.9rem;">แจ้งได้ทั้งแบบ login และไม่ login (ถ้า login อยู่ ระบบจะผูกเรื่องกับบัญชีของคุณให้อัตโนมัติ)</p>
+  <div id="form-alert"></div>
+  <form id="report-form">
+    <label>หัวข้อ</label>
+    <input type="text" name="subject" required minlength="3" maxlength="150">
+    <label>รายละเอียด</label>
+    <textarea name="message" required minlength="5" maxlength="2000"></textarea>
+    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">ส่งเรื่อง</button>
+  </form>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+document.getElementById("report-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById("form-alert");
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd.entries());
+  try {
+    await api.submitReport(payload);
+    alertBox.innerHTML = `<div class="alert alert-success">ส่งเรื่องเรียบร้อยแล้ว ขอบคุณสำหรับข้อมูล!</div>`;
+    e.target.reset();
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+  }
+});
+</script>
+</body>
+</html>

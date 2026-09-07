@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วิธีใช้งานเว็บไซต์ - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container" style="max-width:760px;">
+  <h1>วิธีใช้งานเว็บไซต์</h1>
+  <ol style="line-height:2;">
+    <li>สมัครสมาชิกที่หน้า <a href="/register.html">สมัครสมาชิก</a></li>
+    <li>เข้าไปดูคอร์สที่หน้า <a href="/courses.html">คอร์สเรียน</a> เลือกหมวดหมู่ที่สนใจ</li>
+    <li>กดเข้าไปดูรายละเอียดคอร์ส แล้วกด "เพิ่มลงตะกร้า"</li>
+    <li>ไปที่หน้า <a href="/cart.html">ตะกร้า</a> ตรวจสอบรายการ แก้ไขจำนวน หรือลบรายการได้</li>
+    <li>กด "ชำระเงิน (จำลอง)" ระบบจะออกใบเสร็จให้ทันที</li>
+    <li>ดูประวัติคำสั่งซื้อทั้งหมดได้ที่ "คำสั่งซื้อของฉัน"</li>
+    <li>เจอปัญหาการใช้งาน แจ้งได้ที่หน้า <a href="/report.html">แจ้งปัญหา</a></li>
+  </ol>
+  <p style="color:var(--muted)">หมายเหตุ: ระบบชำระเงินในเว็บนี้เป็นการจำลองเพื่อการสาธิตเท่านั้น ไม่มีการตัดเงินจริงเกิดขึ้น</p>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

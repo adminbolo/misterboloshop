@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งปัญหา - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">รายการแจ้งปัญหา</h1>
+    <div id="report-list"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+async function loadReports() {
+  const mount = document.getElementById("report-list");
+  try {
+    const reports = await api.admin.reports();
+    if (reports.length === 0) { mount.innerHTML = `<div class="empty-state">ยังไม่มีเรื่องแจ้งปัญหา</div>`; return; }
+
+    mount.innerHTML = reports.map(r => `
+      <div class="card" style="padding:18px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between;">
+          <strong>${escapeHtml(r.subject)}</strong>
+          <span class="pill pill-${r.status}">${r.status}</span>
+        </div>
+        <p style="color:var(--muted);">${escapeHtml(r.message)}</p>
+        <div style="font-size:0.8rem; color:var(--muted);">แจ้งเมื่อ ${formatDate(r.created_at)} ${r.user_id ? `โดยผู้ใช้ #${r.user_id}` : "(ไม่ระบุตัวตน)"}</div>
+        <form class="report-update-form" data-id="${r.id}" style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+          <select name="status">
+            <option value="open" ${r.status === "open" ? "selected" : ""}>เปิดอยู่</option>
+            <option value="in_progress" ${r.status === "in_progress" ? "selected" : ""}>กำลังดำเนินการ</option>
+            <option value="closed" ${r.status === "closed" ? "selected" : ""}>ปิดเรื่อง</option>
+          </select>
+          <input type="text" name="admin_note" placeholder="บันทึกของแอดมิน" value="${r.admin_note ? escapeHtml(r.admin_note) : ""}" style="flex:1;">
+          <button type="submit" class="btn btn-sm btn-primary">บันทึก</button>
+        </form>
+      </div>
+    `).join("");
+
+    document.querySelectorAll(".report-update-form").forEach(form => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        await api.admin.updateReport(form.dataset.id, { status: fd.get("status"), admin_note: fd.get("admin_note") || null });
+        loadReports();
+      });
+    });
+  } catch (e) {
+    mount.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("reports");
+  loadReports();
+}
+init();
+</script>
+</body>
+</html>

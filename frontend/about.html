@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เกี่ยวกับเรา - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<section class="container" style="max-width:760px;">
+  <h1>เกี่ยวกับ มิสเตอร์โบโล่</h1>
+  <p>มิสเตอร์โบโล่ เป็นเว็บไซต์สาธิตสำหรับเรียนรู้การสร้างระบบขายคอร์สออนไลน์แบบครบวงจร — มีระบบสมัครสมาชิก, ตะกร้าสินค้า, การชำระเงิน (จำลอง), ใบเสร็จ, ระบบแจ้งปัญหา และหลังบ้านสำหรับผู้ดูแลระบบ</p>
+  <p>โปรเจกต์นี้ถูกสร้างขึ้นเพื่อการศึกษาและทดลองระบบ ไม่ใช่ร้านค้าจริง คอร์สทั้งหมดที่แสดงเป็นเนื้อหาตัวอย่างเท่านั้น</p>
+  <h3>เทคโนโลยีที่ใช้</h3>
+  <ul>
+    <li>Backend: Python + FastAPI + SQLAlchemy + SQLite</li>
+    <li>Frontend: HTML/CSS/JavaScript (แยกจาก backend อย่างชัดเจน เรียกผ่าน REST API)</li>
+    <li>ความปลอดภัย: bcrypt password hashing, JWT ใน httpOnly cookie, rate limiting, CSRF protection, RBAC</li>
+  </ul>
+</section>
+
+<footer><div class="container">© <span id="year"></span> Mister Bolo</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+</body>
+</html>

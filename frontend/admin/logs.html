@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Logs - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">Activity Logs</h1>
+    <p style="color:var(--muted);">บันทึกกิจกรรมทั้งหมดในระบบ (login, สมัครสมาชิก, สั่งซื้อ, การจัดการของ admin ฯลฯ)</p>
+    <div id="log-table"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+async function loadLogs() {
+  const table = document.getElementById("log-table");
+  try {
+    const logs = await api.admin.logs();
+    table.innerHTML = `
+      <table>
+        <thead><tr><th>เวลา</th><th>User ID</th><th>กิจกรรม</th><th>รายละเอียด</th><th>IP</th></tr></thead>
+        <tbody>
+          ${logs.map(l => `
+            <tr>
+              <td>${formatDate(l.created_at)}</td>
+              <td>${l.user_id ?? "-"}</td>
+              <td>${escapeHtml(l.action)}</td>
+              <td><code class="inline">${escapeHtml(l.details || "-")}</code></td>
+              <td>${escapeHtml(l.ip_address || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    table.innerHTML = `<p>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("logs");
+  loadLogs();
+}
+init();
+</script>
+</body>
+</html>

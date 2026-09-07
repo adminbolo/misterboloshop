@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการหมวดหมู่ - Admin - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">จัดการหมวดหมู่</h1>
+
+    <div class="card" style="padding:20px; max-width:400px; margin-bottom:20px;">
+      <div id="cat-alert"></div>
+      <form id="cat-form">
+        <label>ชื่อหมวดหมู่ใหม่</label>
+        <input type="text" name="name" required maxlength="80">
+        <label>คำอธิบาย (ไม่บังคับ)</label>
+        <input type="text" name="description" maxlength="200">
+        <button type="submit" class="btn btn-primary" style="margin-top:14px;">เพิ่มหมวดหมู่</button>
+      </form>
+    </div>
+
+    <div id="cat-table"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+async function loadCategories() {
+  const table = document.getElementById("cat-table");
+  const cats = await api.categories();
+  table.innerHTML = `
+    <table>
+      <thead><tr><th>ชื่อ</th><th>Slug</th><th>คำอธิบาย</th></tr></thead>
+      <tbody>
+        ${cats.map(c => `<tr><td>${escapeHtml(c.name)}</td><td><code class="inline">${escapeHtml(c.slug)}</code></td><td>${escapeHtml(c.description || "-")}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("categories");
+  loadCategories();
+
+  document.getElementById("cat-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const payload = { name: fd.get("name"), description: fd.get("description") || null };
+    const alertBox = document.getElementById("cat-alert");
+    try {
+      await api.admin.createCategory(payload);
+      e.target.reset();
+      loadCategories();
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+    }
+  });
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบเสร็จ - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+
+<div id="receipt-mount"><p style="text-align:center; margin-top:40px;">กำลังโหลด...</p></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+async function loadReceipt() {
+  const user = await requireLogin();
+  if (!user) return;
+
+  const orderNo = new URLSearchParams(window.location.search).get("order_no");
+  const mount = document.getElementById("receipt-mount");
+  if (!orderNo) { mount.innerHTML = "<p>ไม่พบเลขที่คำสั่งซื้อ</p>"; return; }
+
+  try {
+    const [order, info] = await Promise.all([api.order(orderNo), api.receiptInfo(orderNo)]);
+    mount.innerHTML = `
+      <div class="receipt-box">
+        <div class="mock-tag">⚠️ นี่คือใบเสร็จจำลอง (Mock Receipt) เพื่อการสาธิตเท่านั้น ไม่ใช่เอกสารทางภาษีจริง</div>
+        <h2>${escapeHtml(info.shop.name)}</h2>
+        <div style="font-size:0.85rem; color:var(--muted);">
+          เลขประจำตัวผู้เสียภาษี: ${escapeHtml(info.shop.tax_id)}<br>
+          ${escapeHtml(info.shop.address)}
+        </div>
+        <hr>
+        <div class="receipt-row"><span>เลขที่ใบเสร็จ</span><strong>${escapeHtml(order.order_no)}</strong></div>
+        <div class="receipt-row"><span>วันที่</span><span>${formatDate(order.created_at)}</span></div>
+        <div class="receipt-row"><span>ชื่อผู้ซื้อ (username)</span><span>${escapeHtml(info.buyer.username)}</span></div>
+        ${info.buyer.full_name ? `<div class="receipt-row"><span>ชื่อ-นามสกุล</span><span>${escapeHtml(info.buyer.full_name)}</span></div>` : ""}
+        <div class="receipt-row"><span>อีเมล</span><span>${escapeHtml(info.buyer.email)}</span></div>
+        <hr>
+        ${order.items.map(it => `
+          <div class="receipt-row">
+            <span>${escapeHtml(it.course_title)} x${it.quantity}</span>
+            <span>฿${formatMoney(it.unit_price * it.quantity)}</span>
+          </div>
+        `).join("")}
+        <hr>
+        <div class="receipt-row"><span>ยอดรวม</span><span>฿${formatMoney(order.subtotal)}</span></div>
+        <div class="receipt-row"><span>ภาษีมูลค่าเพิ่ม (7%)</span><span>฿${formatMoney(order.vat)}</span></div>
+        <div class="receipt-row receipt-total"><span>ยอดชำระทั้งหมด</span><span>฿${formatMoney(order.total)}</span></div>
+        <hr>
+        <div style="text-align:center; margin-top:16px;">
+          <span class="badge">สถานะ: ชำระเงินแล้ว (จำลอง)</span>
+        </div>
+        <p style="text-align:center; margin-top:18px; font-weight:600; color:var(--text);">
+          🙏 ขอบคุณที่ใช้บริการมิสเตอร์โบโล่ครับ
+        </p>
+        <div style="text-align:center; margin-top:20px;">
+          <a href="/courses.html" class="btn btn-outline">เลือกซื้อคอร์สเพิ่ม</a>
+          <a href="/my-orders.html" class="btn btn-secondary">ดูประวัติคำสั่งซื้อ</a>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    mount.innerHTML = `<div class="empty-state">ไม่พบใบเสร็จนี้: ${escapeHtml(e.message)}</div>`;
+  }
+}
+loadReceipt();
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - มิสเตอร์โบโล่</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="navbar-mount"></div>
+<div class="admin-layout">
+  <div id="admin-sidebar-mount"></div>
+  <div class="admin-content">
+    <h1 class="section-title">Admin Dashboard</h1>
+    <div id="stats" class="stat-cards"><p>กำลังโหลด...</p></div>
+    <h2 class="section-title">กิจกรรมล่าสุด</h2>
+    <div id="recent-logs"><p>กำลังโหลด...</p></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/nav.js"></script>
+<script src="/js/admin/admin-nav.js"></script>
+<script>
+async function init() {
+  const user = await requireAdmin();
+  if (!user) return;
+  renderAdminSidebar("dashboard");
+
+  try {
+    const stats = await api.admin.stats();
+    document.getElementById("stats").innerHTML = `
+      <div class="stat-card"><div class="num">${stats.users}</div><div class="label">ผู้ใช้ทั้งหมด</div></div>
+      <div class="stat-card"><div class="num">${stats.courses}</div><div class="label">คอร์สทั้งหมด</div></div>
+      <div class="stat-card"><div class="num">${stats.orders}</div><div class="label">คำสั่งซื้อ</div></div>
+      <div class="stat-card"><div class="num">฿${formatMoney(stats.revenue)}</div><div class="label">ยอดขายรวม (จำลอง)</div></div>
+      <div class="stat-card"><div class="num">${stats.open_reports}</div><div class="label">ปัญหาที่ยังไม่ปิด</div></div>
+    `;
+  } catch (e) {
+    document.getElementById("stats").innerHTML = `<p>โหลดสถิติไม่สำเร็จ: ${escapeHtml(e.message)}</p>`;
+  }
+
+  try {
+    const logs = await api.admin.logs();
+    const recent = logs.slice(0, 15);
+    document.getElementById("recent-logs").innerHTML = `
+      <table>
+        <thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>กิจกรรม</th><th>รายละเอียด</th></tr></thead>
+        <tbody>
+          ${recent.map(l => `
+            <tr>
+              <td>${formatDate(l.created_at)}</td>
+              <td>${l.user_id ? "#" + l.user_id : "guest"}</td>
+              <td>${escapeHtml(l.action)}</td>
+              <td><code class="inline">${escapeHtml(l.details || "-")}</code></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    document.getElementById("recent-logs").innerHTML = `<p>โหลด log ไม่สำเร็จ</p>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
